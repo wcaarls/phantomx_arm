@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find phantomx_arm_bringup)/launch/arm.launch"/>
+  <include file="$(find phantomx_arm_moveit_config)/launch/move_group.launch"/>
+  <include file="$(find phantomx_arm_moveit_config)/launch/moveit_rviz.launch"/>
+
+</launch>
