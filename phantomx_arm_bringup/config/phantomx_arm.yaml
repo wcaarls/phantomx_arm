@@ -1,7 +1,7 @@
 source: pincher_arm.yaml
 port: /dev/ttyUSB0
-read_rate: 15
-write_rate: 25
+read_rate: 50
+write_rate: 50
 joints: {
     arm_shoulder_pan_joint: {id: 1,  neutral: 512, max_angle: 140, min_angle: -140, max_speed: 90, type: dynamixel},
     arm_shoulder_lift_joint: {id: 2, max_angle: 126, min_angle: -119, max_speed: 90, type: dynamixel},
@@ -11,4 +11,7 @@ joints: {
 }
 controllers: {
     arm_controller: {type: follow_controller, joints: [arm_shoulder_pan_joint, arm_shoulder_lift_joint, arm_elbow_flex_joint, arm_wrist_flex_joint], action_name: arm_controller/follow_joint_trajectory, onboard: False }
+}
+analog_sensors: {
+    distance: { pin: 0 }
 }

@@ -82,15 +82,12 @@ def move_group_python_interface_tutorial():
   ## the robot as a whole.
   robot = moveit_commander.RobotCommander()
 
-  ## Instantiate a PlanningSceneInterface object.  This object is an interface
-  ## to the world surrounding the robot.
-  scene = moveit_commander.PlanningSceneInterface()
-
   ## Instantiate a MoveGroupCommander object.  This object is an interface
   ## to one group of joints.  In this case the group is the joints in the left
   ## arm.  This interface can be used to plan and execute motions on the left
   ## arm.
   group = moveit_commander.MoveGroupCommander("arm")
+  group.set_goal_tolerance(0.001)
 
   print "============ Starting tutorial "
 
@@ -123,7 +120,7 @@ def move_group_python_interface_tutorial():
   ## not use that function in this tutorial since it is 
   ## a blocking function and requires a controller to be active
   ## and report success on execution of a trajectory.
-
+  
   print "============ Generating plan 1"
   pose_target = geometry_msgs.msg.Pose()
   #- Translation: [-0.027, 0.003, 0.481]
@@ -136,7 +133,6 @@ def move_group_python_interface_tutorial():
   pose_target.position.y = 0.003
   pose_target.position.z = 0.481
   group.set_pose_target(pose_target)
-
   group.go(wait=True)
   
   print "============ Generating plan 2"
@@ -151,7 +147,21 @@ def move_group_python_interface_tutorial():
   pose_target.position.y = 0.014
   pose_target.position.z = 0.288
   group.set_pose_target(pose_target)
+  group.go(wait=True)
   
+  print "============ Generating plan 3"
+  
+  pose_target = geometry_msgs.msg.Pose()
+  #- Translation: [0.053, 0.003, 0.334]
+  #- Rotation: in Quaternion [0.001, -0.031, 0.031, 0.999]
+  pose_target.orientation.x = 0.001
+  pose_target.orientation.y = -0.031
+  pose_target.orientation.z = 0.031
+  pose_target.orientation.w = 0.999
+  pose_target.position.x = 0.053
+  pose_target.position.y = 0.003
+  pose_target.position.z = 0.334
+  group.set_pose_target(pose_target)
   group.go(wait=True)
 
   ## When finished shut down moveit_commander.
