@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(phantomx_arm)
-find_package(catkin REQUIRED)
-catkin_metapackage()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+ament_package()

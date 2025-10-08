@@ -1,8 +1,0 @@
-<launch>
-
-  <rosparam file="$(find phantomx_arm_moveit_config)/config/phantomx_arm_controllers.yaml"/>
-  <param name="use_controller_manager" value="true"/>
-  <param name="trajectory_execution/execution_duration_monitoring" value="true"/>
-  <param name="moveit_controller_manager" value="moveit_simple_controller_manager/MoveItSimpleControllerManager"/>
-
-</launch>
