@@ -6,7 +6,7 @@
     <xacro:include filename="$(find phantomx_arm_description)/urdf/phantomx_arm.urdf.xacro" />
 
     <!-- Import control_xacro -->
-    <xacro:include filename="phantomx_arm.ros2_control.xacro" />
+    <xacro:include filename="phantomx_arm.ros2_control_hw.xacro" />
 
 
     <xacro:phantomx_arm_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>

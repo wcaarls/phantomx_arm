@@ -1,0 +1,7 @@
+<library path="phantomx_arm_hw">
+  <class name="phantomx_arm_hw/PhantomXArmHardware" type="PhantomXArmHardware" base_class_type="hardware_interface::SystemInterface">
+    <description>
+      PhantomX Pincher hardware interface
+    </description>
+  </class>
+</library>
