@@ -35,9 +35,9 @@ class Arbotix
     }
 
     // Convert Dynamixel servo speed to radians per second.
-    int speed2rads(int speed)
+    double speed2rads(int speed)
     {
-      return (speed&1023) * (0.111 / 60 * 2 * M_PI) * (speed&1024)?-1:1;
+      return (speed&1023) * (0.111 / 60 * 2 * M_PI) * ((speed&1024)?-1:1);
     }
 
     // Convert radians per second to Dynamixel servo speed.
@@ -46,7 +46,7 @@ class Arbotix
       return std::min(std::max(int(rads / (0.111 / 60 * 2 * M_PI)), 1), 1023);
     }
 
-    int checksum(unsigned char *buf, int n)
+    unsigned char checksum(unsigned char *buf, int n)
     {
       unsigned char sum=0;
       for (size_t ii=0; ii != n; ++ii)

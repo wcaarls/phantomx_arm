@@ -117,7 +117,7 @@ int LxSerial::read(unsigned char* buffer, int numBytes, int seconds, int microse
             #ifdef __DBG__
             printf("Read Timeout... \n");
             #endif
-            return READ_ERROR;
+            return nBytesRead;
         }
     }
 

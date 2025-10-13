@@ -84,7 +84,7 @@ std::vector<hardware_interface::StateInterface> PhantomXArmHardware::export_stat
 std::vector<hardware_interface::CommandInterface> PhantomXArmHardware::export_command_interfaces()
 {
     std::vector<hardware_interface::CommandInterface> command_interfaces;
-    for (size_t ii = 0; ii != 5; ++ii)
+    for (size_t ii = 0; ii != 7; ++ii)
     {
       command_interfaces.emplace_back(
           hardware_interface::CommandInterface(
@@ -131,16 +131,19 @@ hardware_interface::return_type PhantomXArmHardware::read(const rclcpp::Time & t
     return hardware_interface::return_type::ERROR; // exit(1)
   }
   
-  if (!driver_.read(ids, 5, 36, 2, &buf[0][0][0]))
+  if (!driver_.read(ids, 5, 36, 4, &buf[0][0][0]))
   {
     ROS_INFO_STREAM("Could not read from Arbotix board");
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::return_type::OK;
   }
 
   for (size_t ii = 0; ii != 7; ++ii)
   {
-    int pos = buf[ii][0][1]*256+buf[ii][0][0],
+    int pos   = buf[ii][0][1]*256+buf[ii][0][0],
         speed = buf[ii][1][1]*256+buf[ii][1][0];
+
+    if (pos == 65535 || speed == 65535)
+      ROS_INFO_STREAM("No response from servo " << (int)ids[ii]);
 
     // Skip fake joints
     if (ii==4) ii = 6;
@@ -157,7 +160,7 @@ hardware_interface::return_type PhantomXArmHardware::read(const rclcpp::Time & t
 hardware_interface::return_type PhantomXArmHardware::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   unsigned char ids[5] = {1, 2, 3, 4, 5};
-  unsigned char buf[5][2];
+  unsigned char buf[5][2][2];
 
   if (!driver_.is_port_open())
   {
@@ -165,20 +168,23 @@ hardware_interface::return_type PhantomXArmHardware::write(const rclcpp::Time & 
     return hardware_interface::return_type::ERROR; // exit(1)
   }
 
-  for (size_t ii = 0; ii != 7; ++ii)
+  for (size_t ii = 0; ii != 5; ++ii)
   {
     // Skip fake joints
-    if (ii==4) ii = 6;
+    int pos = driver_.rad2pos(cmd_[(ii==4)?6:ii]);
 
-    int pos = driver_.rad2pos(cmd_[ii]);
-    buf[ii][0] = pos&255;
-    buf[ii][1] = (pos>>8)&255;
+    //ROS_INFO_STREAM("Write " << pos << " to id " << (int)ids[ii]);
+
+    buf[ii][0][0] = pos&255;
+    buf[ii][0][1] = (pos>>8)&255;
+    buf[ii][1][0] = 128;
+    buf[ii][1][1] = 0;
   }
 
-  if (!driver_.write(ids, 5, 30, 1, &buf[0][0]))
+  if (!driver_.write(ids, 5, 30, 4, &buf[0][0][0]))
   {
     ROS_INFO_STREAM("Could not write to Arbotix board");
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::return_type::OK;
   }
 
   return hardware_interface::return_type::OK;

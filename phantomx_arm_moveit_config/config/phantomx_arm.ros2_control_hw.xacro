@@ -7,7 +7,7 @@
             <hardware>
                 <!-- By default, set up controllers for simulation. This won't work on real hardware -->
                 <plugin>phantomx_arm_hw/PhantomXArmHardware</plugin>
-                <port>/dev/ttyUSB0</port>
+                <param name="port">/dev/ttyUSB0</param>
             </hardware>
             <joint name="arm_shoulder_pan_joint">
                 <command_interface name="position"/>
