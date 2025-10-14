@@ -9,6 +9,6 @@
     <xacro:include filename="phantomx_arm.ros2_control_hw.xacro" />
 
 
-    <xacro:phantomx_arm_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+    <xacro:phantomx_arm_ros2_control name="PhantomXArmSystem" initial_positions_file="$(arg initial_positions_file)"/>
 
 </robot>

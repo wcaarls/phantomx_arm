@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>phantomx_arm_hw</name>
-  <version>0.0.0</version>
+  <version>0.0.2</version>
   <description>ROS2 Control interface to PhantomX Pincher arm</description>
+  <author>Wouter Caarls</author>
   <maintainer email="wouter@caarls.org">Wouter Caarls</maintainer>
-  <author email="wouter@caarls.org">Wouter Caarls</author>
   <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

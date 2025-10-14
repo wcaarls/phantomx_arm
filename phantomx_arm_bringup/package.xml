@@ -1,16 +1,15 @@
 <package>
   <name>phantomx_arm_bringup</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>
    phantomx_arm_bringup provides launch files for starting the drivers for the PhantomX Pincher arm.
   </description>
-  <author>See turtlebot_arm package</author>
-  <maintainer email="cdr.wolfe@gmail.com">Wolfe</maintainer>
+  <author>Wouter Caarls</author>
+  <maintainer email="wouter@caarls.org">Wouter Caarls</maintainer>
   <license>BSD</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <run_depend>arbotix_python</run_depend>
-  <run_depend>arbotix_controllers</run_depend>
+  <run_depend>phantomx_arm_moveit_config</run_depend>
   
   <export>
     <build_type>ament_cmake</build_type>
