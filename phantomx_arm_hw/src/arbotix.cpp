@@ -23,34 +23,42 @@ bool Arbotix::close()
 
 bool Arbotix::read(unsigned char *ids, unsigned char n_ids, unsigned char addr, unsigned char n_bytes, unsigned char *buf)
 {
+  int rs = n_ids*n_bytes;
   unsigned char packet[n_ids+8] = {255, 255, 254, (unsigned char)(n_ids+4), 132, addr, n_bytes};
-  unsigned char response[n_ids*n_bytes+6];
+  unsigned char response[rs+6];
   int n;
 
+  // Copy ids into packet.
   memcpy(&packet[7], ids, n_ids);
+
+  // Set checkum.
   packet[n_ids+7] = checksum(&packet[2], n_ids+7);
 
+  // Write packet to port.
   n = port_.write(packet, n_ids+8);
   if (n != n_ids+8)
   {
     ROS_ERROR_STREAM("Could not write to port");
     return false;
   }
-    
-  n = port_.read(response, 6+n_ids*n_bytes, 0, 100000);
+  
+  // Read response. Note that we do not handle status packet errors. These will cause a timeout.
+  n = port_.read(response, rs+6, 0, 100000);
   if (n != 6+n_ids*n_bytes)
   {
-    ROS_INFO_STREAM("Could not read from port: received " << n << " bytes, expected " << 6+n_ids*n_bytes);
+    ROS_INFO_STREAM("Could not read from port: received " << n << " bytes, expected " << rs+6);
     return false;
   }
 
-  if (checksum(&response[2], n_ids*n_bytes+3) != response[n_ids*n_bytes+5])
+  // Verify checksum.
+  if (checksum(&response[2], rs+3) != response[rs+5])
   {
     ROS_ERROR_STREAM("Checksum error");
     return false;
   }
 
-  memcpy(buf, &response[5], n_ids*n_bytes);
+  // Copy response into buffer.
+  memcpy(buf, &response[5], rs);
 
   return true;
 }
@@ -61,13 +69,17 @@ bool Arbotix::write(unsigned char *ids, unsigned char n_ids, unsigned char addr,
   unsigned char packet[ps+8] = {255, 255, 254, (unsigned char)(ps+4), 131, addr, n_bytes};
   int n;
 
+  // Copy id and data into packet for all ids.
   for (size_t ii=0; ii != n_ids; ++ii)
   {
             packet[ii*(n_bytes+1)+7] = ids[ii];
     memcpy(&packet[ii*(n_bytes+1)+8], &buf[ii*n_bytes], n_bytes);
   }
+
+  // Set checkum.
   packet[ps+7] = checksum(&packet[2], ps+5);
   
+  // Write packet to port.
   n = port_.write(packet, ps+8);
   if (n != ps+8)
   {
@@ -77,4 +89,3 @@ bool Arbotix::write(unsigned char *ids, unsigned char n_ids, unsigned char addr,
   
   return true;
 }
-

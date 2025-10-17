@@ -1,8 +1,13 @@
+#ifndef ARBOTIX_HPP_
+#define ARBOTIX_HPP_
+
 #include <math.h>
 #include <string>
 
 #include "lx_serial.hpp"
 
+// Low-level interaction with Arbotix-M board.
+// Only sync read and write are supported.
 class Arbotix
 {
   protected:
@@ -12,15 +17,20 @@ class Arbotix
     Arbotix() { }
     ~Arbotix() { }
 
+    // Open serial port.
     bool open(std::string &port_name);
+
+    // Get serial port status.
     bool is_port_open();
+
+    // Close serial port.
     bool close();
 
-    // Read control table entries [addr, addr+n_addrs> from ids. buf is of size n_ids*n_addrs.
-    bool read(unsigned char *ids, unsigned char n_ids, unsigned char addr, unsigned char n_addrs, unsigned char *buf);
+    // Read control table entries [addr, addr+n_bytes> from ids. buf is of size n_ids*n_bytes.
+    bool read(unsigned char *ids, unsigned char n_ids, unsigned char addr, unsigned char n_bytes, unsigned char *buf);
 
-    // Write control table entries [addr, addr+n_addrs> to ids. buf is of size n_ids*n_addrs.
-    bool write(unsigned char *ids, unsigned char n_ids, unsigned char addr, unsigned char n_addrs, unsigned char *buf);
+    // Write control table entries [addr, addr+n_bytes> to ids. buf is of size n_ids*n_bytes.
+    bool write(unsigned char *ids, unsigned char n_ids, unsigned char addr, unsigned char n_bytes, unsigned char *buf);
 
     // Convert Dynamixel servo position to radians.
     double pos2rad(int pos)
@@ -46,6 +56,7 @@ class Arbotix
       return std::min(std::max(int(rads / (0.111 / 60 * 2 * M_PI)), 1), 1023);
     }
 
+    // Calculate Dynamixel packet checksum.
     unsigned char checksum(unsigned char *buf, int n)
     {
       unsigned char sum=0;
@@ -53,4 +64,6 @@ class Arbotix
         sum += buf[ii];
       return 255-sum;
     }
-  };
+};
+
+#endif // ARBOTIX_HPP_

@@ -7,6 +7,7 @@ interface to the arm. Only basic arm and gripper movement is supported.
 
 To launch the demo, just use
 
-´´´
+```
 ros2 launch phantomx_arm_bringup planning_demo.launch.py
-´´´
+```
+

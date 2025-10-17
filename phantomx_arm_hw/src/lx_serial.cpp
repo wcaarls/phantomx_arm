@@ -1,183 +1,204 @@
-//============================================================================
-// Adapted from: LxSerial.cpp
-// Author      : Eelko van Breda,www.dbl.tudelft.nl
-// Version     : 0.1
-// Copyright   : Copyright (c) 2008 LGPL
-// Description : serial communicatin class linux
-//============================================================================
+// Adapted from LxSerial.cpp by Eelko van Breda, www.dbl.tudelft.nl
+// Copyright (c) 2008 LGPL
 
 #include <stdio.h>
 
 #include <phantomx_arm_hw/lx_serial.hpp>
 
-/*  constructor */
 LxSerial::LxSerial()
 {
-    hPort = INVALID_DEVICE_HANDLE;
+  hPort = INVALID_DEVICE_HANDLE;
 }
 
-/* return name of the port that was opened */
-std::string& LxSerial::get_name()
+LxSerial::~LxSerial()
 {
-    return s_port_name;
+  if (hPort != INVALID_DEVICE_HANDLE)
+    close();
 }
 
-/* open port */
 bool LxSerial::open(const std::string& portname)
 {
-    // Open port
-    hPort = ::open(portname.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);                   // open the serial device
+  // Open port
+  hPort = ::open(portname.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 
-    if (hPort < 0) {                                        // check if port opened correctly
-        perror(" Could not open serial port, aborting");
-        return false;
-    }
+  if (hPort < 0) {
+    perror(" Could not open serial port, aborting");
+    return false;
+  }
 
-    tcgetattr(hPort, &options);                                     // get the current termios (com port options struct) from the kernel
-    tcgetattr(hPort, &old_options);                                 // get the current termios copy to restore on close
+  // Get the current termios (com port options struct) from the kernel.
+  tcgetattr(hPort, &options);
 
-    cfsetispeed(&options, B115200);                                 // set incomming baudrate to standard 115200, this can be changed with the function set_speed()
-    cfsetospeed(&options, B115200);                                 // set outgoing baudrate to standard 115200
+  // Get the current termios copy to restore on close.
+  tcgetattr(hPort, &old_options);
 
-    options.c_cflag |= (CLOCAL|CREAD|CS8);                              // CREAD = enanble receiver
-    options.c_cflag &= ~(CRTSCTS|PARENB|CSTOPB);                            // Disable HW flow control
+  // set incoming and outgoing baudrate to 115200.
+  cfsetispeed(&options, B115200);
+  cfsetospeed(&options, B115200);
 
-    options.c_lflag &= ~(ECHO|ECHONL|ECHOE|ICANON|ISIG|IEXTEN);
-    options.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF);
-    options.c_oflag &= ~(OPOST);
+  // 8 data bits, do not change owner of port
+  options.c_cflag |= (CLOCAL|CREAD|CS8);
 
-    options.c_cc[VMIN]     = 0;                                     // VMIN Minimum number of characters to read
-    options.c_cc[VTIME]    = WAIT_FOR_DATA_DSEC;                            // Time to wait for data (tenths of seconds)
+  // No hardware flow control, no parity, 1 stop bit.
+  options.c_cflag &= ~(CRTSCTS|PARENB|CSTOPB);
 
-    if (tcsetattr(hPort,TCSANOW, &options)!=0){                         // Set the new options for the port now
-        perror("Error: Could not set serial port settings");
-        return false;
-    }
+  // No echo, raw input, no signals or extended functions
+  options.c_lflag &= ~(ECHO|ECHONL|ECHOE|ICANON|ISIG|IEXTEN);
 
-    usleep(100);                                            // additional wait for correct functionality
-    tcflush(hPort, TCIOFLUSH);                                  // flush terminal data
+  // NO break signal signal. Leave bits alone. No software flow control.
+  options.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF);
 
-    // Save port name
-    s_port_name = portname;
+  // Raw output.
+  options.c_oflag &= ~(OPOST);
 
-    return true;
+  // Minimum number of characters to read.
+  options.c_cc[VMIN] = 0;
+
+  // Time to wait for data (tenths of seconds).
+  options.c_cc[VTIME] = WAIT_FOR_DATA_DSEC;
+
+  // Set the new port options.
+  if (tcsetattr(hPort,TCSANOW, &options)!=0) {
+    perror("Error: Could not set serial port settings");
+    return false;
+  }
+
+  // Wait for things to settle and flush buffers.
+  usleep(100);
+  tcflush(hPort, TCIOFLUSH);
+
+  // Save port name.
+  s_port_name = portname;
+
+  return true;
 }
 
 bool LxSerial::is_open()
 {
-    return hPort >= 0;
+  return hPort >= 0;
+}
+
+std::string& LxSerial::get_name()
+{
+  return s_port_name;
 }
 
 bool LxSerial::close()
 {
-    if (hPort==INVALID_DEVICE_HANDLE)
-        return true;
-
-    if (tcsetattr(hPort,TCSANOW, &old_options)!=0) {                        // restore the old port settings
-        perror("Warning: Could not restore serial port settings.");
-    }
-
-    if(::close(hPort) == -1) {                                    //close serial port
-        perror("Error: Could not close serial port.");
-        return false;
-    }
-    hPort = INVALID_DEVICE_HANDLE;
+  if (hPort==INVALID_DEVICE_HANDLE)
     return true;
+
+  // Restore the old port settings.
+  if (tcsetattr(hPort,TCSANOW, &old_options)!=0) {                        
+    perror("Warning: Could not restore serial port settings.");
+  }
+
+  // Close serial port.
+  if(::close(hPort) == -1) {                                    
+    perror("Error: Could not close serial port.");
+    return false;
+  }
+
+  hPort = INVALID_DEVICE_HANDLE;
+
+  return true;
 }
 
 int LxSerial::read(unsigned char* buffer, int numBytes) const
 {
-    int nBytesRead = ::read(hPort, buffer, numBytes);
+  int nBytesRead = ::read(hPort, buffer, numBytes);
 
-    #ifdef __DBG__
+  #ifdef __DBG__
     printf("read  ");
     for (int i=0;i<nBytesRead;i++)
         { printf("%02X ",buffer[i]); }
     printf("(%d)\n",nBytesRead);
-    #endif
+  #endif
 
-    return nBytesRead;
+  return nBytesRead;
 }
 
 int LxSerial::read(unsigned char* buffer, int numBytes, int seconds, int microseconds)
 {
-    // Init time variables (they are decreased by wait_for_input)
-    int s = seconds;
-    int us = microseconds;
-    int nBytesRead = 0;
-    while (nBytesRead < numBytes)
-    {
-        if( wait_for_input( &s, &us) )
-        {
-            int partialRead = ::read(hPort, buffer + nBytesRead, numBytes - nBytesRead);  // Read data
-            nBytesRead += partialRead;
-        }
-        else
-        {
-            #ifdef __DBG__
-            printf("Read Timeout... \n");
-            #endif
-            return nBytesRead;
-        }
-    }
+  // Init time variables (they are decreased by wait_for_input).
+  int s = seconds;
+  int us = microseconds;
+  int nBytesRead = 0;
 
-    #ifdef __DBG__
+  while (nBytesRead < numBytes)
+  {
+    if(wait_for_input(&s, &us))
+    {
+      // Read available data.
+      int partialRead = ::read(hPort, buffer + nBytesRead, numBytes - nBytesRead);  
+      nBytesRead += partialRead;
+    }
+    else
+    {
+      #ifdef __DBG__
+        printf("Read Timeout... \n");
+      #endif
+
+      return nBytesRead;
+    }
+  }
+
+  #ifdef __DBG__
     printf("read  ");
     for (int i=0;i<nBytesRead;i++)
         { printf("%02X ",buffer[i]); }
     printf("(%d)\n",nBytesRead);
-    #endif
+  #endif
 
-    return nBytesRead;
+  return nBytesRead;
 }
 
 bool LxSerial::wait_for_input(int *seconds, int *microseconds)
 {
-    fd_set readset;
-    timeval timeout;
-    timeout.tv_sec = *seconds;                                  // seconds
-    timeout.tv_usec = *microseconds;                                // microseconds
-    FD_ZERO(&readset);                                          // clear file discriptor
-    FD_SET(hPort, &readset);                                    // set filediscripter for port
-    int res = select(hPort+1, &readset, NULL, NULL, &timeout);  // wait till readable data is in the buffer
-    *seconds = timeout.tv_sec;
-    *microseconds = timeout.tv_usec;
-    return res == 1;
+  fd_set readset;
+  timeval timeout;
+  timeout.tv_sec = *seconds;
+  timeout.tv_usec = *microseconds;
+
+  // Set file discriptor only for our port.
+  FD_ZERO(&readset);                                          
+  FD_SET(hPort, &readset);                                    
+
+  // Wait until readable data is in the buffer.
+  int res = select(hPort+1, &readset, NULL, NULL, &timeout);
+
+  // Update timeout based on how long we waited.
+  *seconds = timeout.tv_sec;
+  *microseconds = timeout.tv_usec;
+
+  return res == 1;
 }
 
 int LxSerial::write(unsigned char* buffer, int numBytes)
 {
-    int msc = TIOCM_RTS;
-    int numBytesWritten = ::write(hPort, buffer, numBytes);                       // write data
+  int numBytesWritten = ::write(hPort, buffer, numBytes);
 
-    if (numBytes != numBytesWritten){
-        perror("Error while writing to serial port");
-        assert(numBytes == numBytesWritten);
-    }
+  if (numBytes != numBytesWritten){
+    perror("Error while writing to serial port");
+    assert(numBytes == numBytesWritten);
+  }
 
-    #ifdef __DBG__
+  #ifdef __DBG__
     printf("write ");
     for (int i=0;i<numBytes;i++)
         { printf("%02X ",buffer[i]); }
     printf("(%d)",numBytesWritten);
     printf("\n");
-    #endif
+  #endif
 
-    tcdrain(hPort);                                         // Wait till all the data in the buffer is transmitted
+  // Wait until all the data in the buffer has been transmitted.
+  tcdrain(hPort);                                         
 
-    return numBytesWritten;
+  return numBytesWritten;
 }
 
 void LxSerial::flush()
 {
-    tcflush(hPort, TCIOFLUSH);                                  // flush data buffer
-}
-
-LxSerial::~LxSerial()
-{
-    // Warn when you forgot to close the port before destruction.
-    // We CANNOT call port_close() here, because port_close is a virtual function
-    // and virtual functions cannot be called in constructors and destructors.
-    if (hPort != INVALID_DEVICE_HANDLE)
-        printf("[LxSerial] Warning: you didn't call port_close before calling the destructor.\n");
+  // Flush data buffers.
+  tcflush(hPort, TCIOFLUSH);                                  
 }
