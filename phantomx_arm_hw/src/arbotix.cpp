@@ -46,14 +46,32 @@ bool Arbotix::read(unsigned char *ids, unsigned char n_ids, unsigned char addr, 
   n = port_.read(response, rs+6, 0, 100000);
   if (n != 6+n_ids*n_bytes)
   {
+    if (n == 6)
+    {
+      // Status packet
+      if (checksum(&response[2], 3) != response[5])
+      {
+        ROS_ERROR_STREAM("Checksum error on status: expected " << (int)checksum(&response[2], 3) << ", got " << (int)response[5]);
+        return false;
+      }
+      
+      if (response[4] == 16)
+        ROS_INFO_STREAM("Arbotix board reported checksum error");
+      else
+        ROS_INFO_STREAM("Arbotix board reported error: " << (int)response[4]);
+
+      return false;
+    }
+  
     ROS_INFO_STREAM("Could not read from port: received " << n << " bytes, expected " << rs+6);
     return false;
   }
-
+  
   // Verify checksum.
   if (checksum(&response[2], rs+3) != response[rs+5])
   {
-    ROS_ERROR_STREAM("Checksum error");
+    ROS_ERROR_STREAM("Checksum error: expected " << (int)checksum(&response[2], rs+3) << ", got " << (int)response[rs+5]);
+    port_.flush();
     return false;
   }
 

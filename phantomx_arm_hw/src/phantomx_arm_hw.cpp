@@ -13,6 +13,7 @@
 
 #define ROS_ERROR_STREAM(x) RCLCPP_ERROR_STREAM(rclcpp::get_logger("PhantomXArmHardware"), x)
 #define ROS_INFO_STREAM(x) RCLCPP_INFO_STREAM(rclcpp::get_logger("PhantomXArmHardware"), x)
+#define ROS_INFO_STREAM_ONCE(x) RCLCPP_INFO_STREAM_ONCE(rclcpp::get_logger("PhantomXArmHardware"), x)
 
 hardware_interface::CallbackReturn PhantomXArmHardware::on_init(const hardware_interface::HardwareInfo & info)
 {
@@ -110,6 +111,8 @@ hardware_interface::CallbackReturn PhantomXArmHardware::on_activate(const rclcpp
       return CallbackReturn::ERROR;
     }
 
+    ROS_INFO_STREAM("Connecting to Arbotix board on port " << port_);
+    
     return CallbackReturn::SUCCESS;
 }
 
@@ -132,16 +135,15 @@ hardware_interface::return_type PhantomXArmHardware::read(const rclcpp::Time & t
   }
   
   if (!driver_.read(ids, 5, 36, 4, &buf[0][0][0]))
-  {
-    ROS_INFO_STREAM("Could not read from Arbotix board");
     return hardware_interface::return_type::OK;
-  }
+  else
+    ROS_INFO_STREAM_ONCE("Connection established");
 
   for (size_t ii = 0; ii != 7; ++ii)
   {
     int pos   = buf[ii][0][1]*256+buf[ii][0][0],
         speed = buf[ii][1][1]*256+buf[ii][1][0];
-
+        
     if (pos == 65535 || speed == 65535)
       ROS_INFO_STREAM("No response from servo " << (int)ids[ii]);
 
