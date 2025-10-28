@@ -16,9 +16,9 @@
   
      <!-- Finger 1 --> 
     <joint name="gripper_joint" type="prismatic">
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0.03 0 0" rpy="0 0 0"/>
       <axis xyz="1 0 0"/>
-      <limit effort="30" velocity="0.5" lower="-2.0" upper="2.0"/>
+      <limit effort="30" velocity="0.005" lower="-0.021" upper="0.001"/>
       <parent link="gripper_servo_link"/>
       <child link="gripper_active_link"/>
     </joint> 

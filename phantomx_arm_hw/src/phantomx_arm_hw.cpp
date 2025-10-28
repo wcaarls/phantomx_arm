@@ -151,9 +151,15 @@ hardware_interface::return_type PhantomXArmHardware::read(const rclcpp::Time & t
     if (ii==4) ii = 6;
 
     if (pos != 65535)
+    {
       pos_[ii] = driver_.pos2rad(pos);
+      if (ii == 6) pos_[ii] /= 100;
+    }
     if (speed != 65535)
+    {
       vel_[ii] = driver_.speed2rads(speed);
+      if (ii == 6) vel_[ii] /= 100;
+    }
   }
   
   return hardware_interface::return_type::OK;
@@ -173,9 +179,13 @@ hardware_interface::return_type PhantomXArmHardware::write(const rclcpp::Time & 
   for (size_t ii = 0; ii != 5; ++ii)
   {
     // Skip fake joints
-    int pos = driver_.rad2pos(cmd_[(ii==4)?6:ii]);
-
-    //ROS_INFO_STREAM("Write " << pos << " to id " << (int)ids[ii]);
+    double posf;
+    if (ii==4)
+      posf = cmd_[6]*100;
+    else
+      posf = cmd_[ii];
+      
+    int pos = driver_.rad2pos(posf);
 
     buf[ii][0][0] = pos&255;
     buf[ii][0][1] = (pos>>8)&255;
