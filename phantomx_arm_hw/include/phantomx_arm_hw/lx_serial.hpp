@@ -52,6 +52,9 @@ class LxSerial
 
     // Flush input and output buffers.
     void flush();
+    
+    // Convert buffer to hex string.
+    std::string buf2str(unsigned char *buffer, int numBytes) const;
 };
 
 #endif // LXSERIAL_HPP_

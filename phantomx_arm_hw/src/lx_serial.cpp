@@ -2,8 +2,14 @@
 // Copyright (c) 2008 LGPL
 
 #include <stdio.h>
+#include <iomanip>
 
 #include <phantomx_arm_hw/lx_serial.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#define ROS_DEBUG_STREAM(x) RCLCPP_INFO_STREAM(rclcpp::get_logger("PhantomXArmHardware"), x)
+
+//#define __DBG__
 
 LxSerial::LxSerial()
 {
@@ -65,7 +71,7 @@ bool LxSerial::open(const std::string& portname)
 
   // Wait for things to settle and flush buffers.
   usleep(100);
-  tcflush(hPort, TCIOFLUSH);
+  tcflush(hPort, TCIOFLUSH);                                  
 
   // Save port name.
   s_port_name = portname;
@@ -109,10 +115,7 @@ int LxSerial::read(unsigned char* buffer, int numBytes) const
   int nBytesRead = ::read(hPort, buffer, numBytes);
 
   #ifdef __DBG__
-    printf("read  ");
-    for (int i=0;i<nBytesRead;i++)
-        { printf("%02X ",buffer[i]); }
-    printf("(%d)\n",nBytesRead);
+    ROS_DEBUG_STREAM("read " << buf2str(buffer, nBytesRead));
   #endif
 
   return nBytesRead;
@@ -136,18 +139,15 @@ int LxSerial::read(unsigned char* buffer, int numBytes, int seconds, int microse
     else
     {
       #ifdef __DBG__
-        printf("Read Timeout... \n");
+        ROS_DEBUG_STREAM("Read Timeout...");
       #endif
 
-      return nBytesRead;
+      break;
     }
   }
 
   #ifdef __DBG__
-    printf("read  ");
-    for (int i=0;i<nBytesRead;i++)
-        { printf("%02X ",buffer[i]); }
-    printf("(%d)\n",nBytesRead);
+    ROS_DEBUG_STREAM("read " << buf2str(buffer, nBytesRead));
   #endif
 
   return nBytesRead;
@@ -184,11 +184,7 @@ int LxSerial::write(unsigned char* buffer, int numBytes)
   }
 
   #ifdef __DBG__
-    printf("write ");
-    for (int i=0;i<numBytes;i++)
-        { printf("%02X ",buffer[i]); }
-    printf("(%d)",numBytesWritten);
-    printf("\n");
+    ROS_DEBUG_STREAM("write " << buf2str(buffer, numBytesWritten));
   #endif
 
   // Wait until all the data in the buffer has been transmitted.
@@ -201,4 +197,14 @@ void LxSerial::flush()
 {
   // Flush data buffers.
   tcflush(hPort, TCIOFLUSH);                                  
+}
+
+std::string LxSerial::buf2str(unsigned char *buffer, int numBytes) const
+{
+  std::ostringstream oss;
+  for (int i=0;i<numBytes;i++)
+    oss << std::setw(2) << std::setfill('0') << std::hex << (int)buffer[i] << " ";
+  oss << "(" << std::dec << numBytes << ")";
+  
+  return oss.str();
 }

@@ -32,7 +32,7 @@ bool Arbotix::read(unsigned char *ids, unsigned char n_ids, unsigned char addr, 
   memcpy(&packet[7], ids, n_ids);
 
   // Set checkum.
-  packet[n_ids+7] = checksum(&packet[2], n_ids+7);
+  packet[n_ids+7] = checksum(&packet[2], n_ids+5);
 
   // Write packet to port.
   n = port_.write(packet, n_ids+8);
